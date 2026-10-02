@@ -1,0 +1,20 @@
+[package]
+name = "goba"
+version = "0.1.0"
+edition = "2024"
+description = "goba — go background: detach a command, keep its output, manage it by id"
+license = "MIT"
+
+[dependencies]
+libc = "0.2.189"
+
+[dev-dependencies]
+libc = "0.2.189"
+
+# R61 (<= 3 MB stripped) and R65 (<= 30 s clean build).
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = "symbols"

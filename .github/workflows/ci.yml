@@ -1,0 +1,62 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+# R70: the full suite runs on every platform v1 claims to support (R67).
+# NOTE: GitHub retires runner images on its own schedule — verify the labels
+# (`macos-15-intel` for x86_64 macOS especially) before relying on this.
+jobs:
+  test:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - macos-14        # macOS arm64
+          - macos-15-intel  # macOS x86_64
+          - ubuntu-24.04    # Linux x86_64
+          - ubuntu-24.04-arm # Linux arm64
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain
+        run: rustup show active-toolchain && cargo --version
+      - name: Lint
+        run: cargo clippy --all-targets -- -D warnings
+      - name: Test
+        run: cargo test
+      - name: Release build
+        run: cargo build --release
+
+      # R61 (budget gate). Kept separate from `cargo test` so the number is visible in the log.
+      - name: Binary size under 3 MB
+        shell: bash
+        run: |
+          set -eu
+          size=$(wc -c < target/release/goba)
+          echo "goba: $size bytes"
+          test "$size" -le 3145728
+
+      # A smoke test on the release artifact: the earlier steps exercised the debug build.
+      - name: Smoke test the release binary
+        shell: bash
+        run: |
+          set -eu
+          export GOBA_DIR="$(mktemp -d)/goba"
+          G="$PWD/target/release/goba"
+
+          live=$($G -q sleep 5)
+          done_id=$($G -q sh -c 'echo hi')
+          test "$($G -l | wc -l)" -eq 2
+
+          until $G -ld | grep -q "$done_id"; do sleep 0.05; done
+          $G -v "$done_id" | grep -qx hi
+
+          $G -la | grep -q "$live"
+          $G -k "$live"          # a single untrapped process: deterministically SIGTERM
+          $G -ld | grep -q 'killed(SIGTERM)'
+
+          $G -r "$live"; $G -r "$done_id"
+          test -z "$($G -l)"
