@@ -171,9 +171,6 @@ pub fn exe_path(pid: libc::pid_t) -> io::Result<PathBuf> {
     Ok(PathBuf::from(std::ffi::OsString::from_vec(buf[..end].to_vec())))
 }
 
-#[cfg(target_os = "linux")]
-use std::os::unix::ffi::OsStringExt;
-
 #[cfg(target_os = "macos")]
 use std::os::unix::ffi::OsStringExt;
 

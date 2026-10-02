@@ -29,6 +29,11 @@ pub const SCHEMA: u32 = 1;
 const DIR_MODE: libc::mode_t = 0o700;
 const FILE_MODE: libc::mode_t = 0o600;
 
+// `DirBuilder::mode` takes a `u32`, but `libc::mode_t` is `u16` on macOS and `u32` on Linux
+// (R67): the widening cast is required on macOS and redundant on Linux.
+#[allow(clippy::unnecessary_cast)]
+const DIR_MODE_U32: u32 = DIR_MODE as u32;
+
 /// A published session directory: `s/<num>-<sid>`.
 #[derive(Clone, Debug)]
 pub struct Entry {
@@ -424,7 +429,7 @@ impl Store {
     pub fn open() -> Result<Store, Fail> {
         let path = base_path();
         let created = match std::fs::DirBuilder::new()
-            .mode(DIR_MODE as u32)
+            .mode(DIR_MODE_U32)
             .create(&path)
         {
             Ok(()) => true,

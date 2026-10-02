@@ -27,6 +27,22 @@ cargo test                   # unit + integration suites
 
 macOS (arm64/x86_64) and Linux (x86_64/arm64). No runtime dependencies beyond libc.
 
+### Running the Linux CI legs locally
+
+Docker can reproduce the two Linux runners of `.github/workflows/ci.yml` (R67/R70) from any
+machine; `macos-14`/`macos-15-intel` have no container equivalent.
+
+```sh
+docker/linux-ci.sh                    # linux/amd64 + linux/arm64, every CI step
+docker/linux-ci.sh --platform arm64   # one architecture
+docker/linux-ci.sh --steps clippy     # one step (clippy, test, release, size, smoke)
+```
+
+The toolchain is pinned to what the GitHub runners resolve (stable, `docker/linux.Dockerfile`),
+not to this machine's `rustup default`: the two differ often enough to explain a lint that is
+green locally and red in CI. Sources are mounted read-only and copied into per-architecture
+volumes, so nothing is written to the checkout and builds stay cached.
+
 ## Usage
 
 ```
